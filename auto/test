@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+# mkdir -p coverage
+# auto/dev-environment sh -c "go test -coverprofile=coverage/coverage.txt -covermode count && gcov2lcov -infile=coverage/coverage.txt -outfile=coverage/lcov.info && gocover-cobertura < coverage/coverage.txt > coverage/coverage.xml"
+
+auto/dev-environment go test -v ./...

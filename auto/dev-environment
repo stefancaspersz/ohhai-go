@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+# if running in CI then
+#   do something different
+# else
+docker build --tag ohhai-go-dev --file Dockerfile.dev . 1>&2
+
+
+# If we don't supply it with arguments, then assume that we are wanting a shell and we need it interactive.
+# Otherwise assume we are running another script (like auto/plan).
+if [[ $# -eq 0 ]]; then
+  args=("sh")
+else
+  args=("$@")
+fi
+
+# If we are in a terminal, we want to enable a TTY so that processes will use colour.
+if [[ -t 1 ]]; then
+  tty="true"
+fi
+
+if [[ "$(uname -s)" == "Linux" ]]; then
+  user="--user=$(id -u):$(id -g)"
+fi
+
+exec docker run --rm \
+  -w "/app" \
+  -v "${PWD}:/app" \
+  -e CI \
+  -e LOCAL_TESTING \
+  -e GOOS \
+  -e GOARCH \
+  -e GOCACHE="/app/.cache/go-build" \
+  -e GOLANGCI_LINT_CACHE="/app/.cache/golangci-lint" \
+  ${tty:+"--tty"} \
+  --interactive \
+  ${user:+"${user}"} \
+  ohhai-go-dev \
+  "${args[@]}"

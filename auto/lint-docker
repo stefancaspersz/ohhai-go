@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+shopt -s nullglob  # Enable nullglob
+
+# We always want to lint all Dockerfiles so that users can see all feedback, rather than one at a time.
+success=true
+for dockerfile in Dockerfile*; do
+  echo "Linting ${dockerfile}"
+
+  if bin/hadolint "${dockerfile}"; then
+    echo "No issues found"
+  else
+    success=false
+  fi
+  echo
+done
+
+if [[ "${success}" != "true" ]]; then
+  exit 1
+fi

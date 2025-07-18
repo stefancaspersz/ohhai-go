@@ -1,0 +1,21 @@
+FROM docker.io/library/golang:alpine@sha256:ddf52008bce1be455fe2b22d780b6693259aaf97b16383b6372f4b22dd33ad66 AS builder
+
+RUN go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.2.2 && \
+    go install github.com/jandelgado/gcov2lcov@latest && \
+    go install github.com/t-yuki/gocover-cobertura@latest
+
+FROM docker.io/library/golang:alpine@sha256:ddf52008bce1be455fe2b22d780b6693259aaf97b16383b6372f4b22dd33ad66
+
+RUN addgroup -S nonroot \
+    && adduser -S nonroot -G nonroot
+
+COPY --from=builder /go/bin/golangci-lint /usr/bin/golangci-lint
+COPY --from=builder /go/bin/gcov2lcov /usr/bin/gcov2lcov
+COPY --from=builder /go/bin/gocover-cobertura /usr/bin/gocover-cobertura
+
+USER nonroot
+
+WORKDIR /workspace
+
+COPY go.mod ./
+RUN go mod download

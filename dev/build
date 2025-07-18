@@ -1,0 +1,49 @@
+#!/bin/busybox sh
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+# There are two ways to use this script. If you're running it directly for local development, you
+# should run it with no arguments. This will automatically detect which operating system and
+# architecture you're using, and build a binary just for that platform. It will also create a
+# convenient symlink in the root of the repository.
+#
+# The second way is by passing it the name of a platform, in the format "<os>/<arch>" (following the
+# usual Golang convention). It will automatically split this platform identifier into the relevant
+# environment variables, and then proceed similarly. If you're running this script outside of a
+# container, you're probably testing builds for a platform different to your own. There isn't much
+# other reason to do so.
+
+DIR="artifacts"
+
+if [ -d "$DIR" ]
+then
+	if [ "$(ls -A $DIR)" ]; then
+     echo "Take action $DIR is not Empty"
+     exit 1
+	else
+    echo "$DIR is Empty"
+	fi
+else
+	echo "Directory $DIR not found."
+  mkdir artifacts
+fi
+
+dest_path="artifacts/ohhai_${GOOS}_${GOARCH}"
+
+if [[ "${GOOS}" == "windows" ]]; then
+  dest_path="${dest_path}.exe"
+fi
+
+echo "Building for platform '${GOOS}/${GOARCH}'"
+
+# go build -o "${dest_path}" -trimpath
+go build -ldflags="-extldflags=-static" -o "${dest_path}" -trimpath
+
+if [[ "${LOCAL_TESTING:-}" != "false" ]]; then
+  if [[ "${GOOS}" == "linux" ]] || [[ "${GOOS}" == "darwin" ]]; then
+    if [[ "${GOARCH}" == "amd64" ]] || [[ "${GOARCH}" == "arm64" ]]; then
+      ln -sf "${dest_path}" "ohhai"
+    fi
+  fi
+fi

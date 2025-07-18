@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+# There are two ways to use this script. If you're running it directly for local development, you
+# should run it with no arguments. This will automatically detect which operating system and
+# architecture you're using, and build a binary just for that platform. It will also create a
+# convenient symlink in the root of the repository.
+#
+# The second way is by passing it the name of a platform, in the format "<os>/<arch>" (following the
+# usual Golang convention). It will automatically split this platform identifier into the relevant
+# environment variables, and then proceed similarly. This approach is primarily designed for use by
+# the auto/build-all script.
+
+if [[ -n "${1:-}" ]]; then
+  platform="${1}"
+  IFS='/' read -ra platform_arr <<< "${platform}"
+  export GOOS="${platform_arr[0]}"
+  export GOARCH="${platform_arr[1]}"
+else
+  source dev/go-env
+
+  if [[ -z "${LOCAL_TESTING:-}" ]]; then
+    export LOCAL_TESTING="true"
+  fi
+fi
+
+auto/dev-environment dev/build

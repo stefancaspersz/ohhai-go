@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+shopt -s extglob
+shopt -s nullglob
+
+# List of files to ignore. This is easier to manage as an array.
+ignore_files=(
+)
+
+GLOBIGNORE="$(IFS=":"; echo "${ignore_files[*]-}")"
+
+bin/shellcheck --external-sources \
+  auto/* \
+  bin/* \
+  dev/*
